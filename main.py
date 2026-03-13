@@ -8,24 +8,20 @@ from dotenv import load_dotenv
 # 🔐 ЗАГРУЗКА ПЕРЕМЕННЫХ ОКРУЖЕНИЯ
 # ============================================
 
-load_dotenv()  # Загрузка переменных из .env файла
+load_dotenv()
 
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 
-# Проверка токена перед запуском
 if not DISCORD_TOKEN:
     print("❌ ОШИБКА: DISCORD_TOKEN не найден в .env файле!")
-    print("   Проверьте файл .env и убедитесь, что токен указан правильно.")
     exit(1)
 
 # ============================================
 # 🛡️ КОНФИГУРАЦИЯ ПРАВ ДОСТУПА
 # ============================================
 
-# ID владельца бота
 OWNER_ID = 314805583788244993
 
-# ID админ-ролей (любой с такой ролью получает доступ к командам)
 ADMIN_ROLE_IDS = [
     1482021644703760607,
     1482021651867631746,
@@ -39,8 +35,8 @@ ADMIN_ROLE_IDS = [
 # ============================================
 
 intents = discord.Intents.default()
-intents.members = True          # Доступ к списку участников (обязательно для !addrole)
-intents.message_content = True  # Доступ к тексту сообщений (обязательно для команд)
+intents.members = True
+intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
@@ -49,12 +45,9 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 # ============================================
 
 async def is_authorized(ctx):
-    """Проверяет, есть ли у пользователя права на использование команд"""
-    # Проверка на владельца
     if ctx.author.id == OWNER_ID:
         return True
     
-    # Проверка на наличие админ-роли
     if hasattr(ctx, 'guild') and ctx.guild:
         for role_id in ADMIN_ROLE_IDS:
             role = ctx.guild.get_role(role_id)
@@ -69,14 +62,15 @@ async def is_authorized(ctx):
 
 @bot.event
 async def on_ready():
-    """Событие при запуске бота"""
+    # ✅ УДАЛЯЕМ СТАНДАРТНУЮ КОМАНДУ HELP
+    bot.remove_command('help')
     
     # 🟣 Установка статуса "Не беспокоить" и активности
     await bot.change_presence(
-        status=discord.Status.dnd,  # Status.dnd = Do Not Disturb (Не беспокоить)
+        status=discord.Status.dnd,
         activity=discord.Activity(
-            type=discord.ActivityType.watching,  # Тип активности: Смотрит
-            name="за Модерирует сервер"          # Текст активности
+            type=discord.ActivityType.watching,
+            name="за Модерирует сервер"
         )
     )
     
@@ -97,7 +91,6 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
-    """Обработка ошибок команд"""
     if isinstance(error, commands.CommandNotFound):
         await ctx.send("❌ **Ошибка:** Команда не найдена. Используйте `!help`")
     elif isinstance(error, commands.MissingRequiredArgument):
@@ -112,26 +105,18 @@ async def on_command_error(ctx, error):
 # ============================================
 
 @bot.command(name='addrole')
-@commands.cooldown(1, 60, commands.BucketType.default)  # Лимит: 1 раз в 60 секунд
+@commands.cooldown(1, 60, commands.BucketType.default)
 async def add_role_to_all(ctx, role_id: int):
-    """
-    Выдает указанную роль всем участникам сервера.
-    Доступно только владельцу и обладателям админ-ролей.
-    """
-    
-    # 1. Проверка прав доступа
     if not await is_authorized(ctx):
         await ctx.send("🚫 **Ошибка доступа:** У вас нет прав для использования этой команды.")
         return
 
-    # 2. Поиск роли
     try:
         role = ctx.guild.get_role(role_id)
         if role is None:
             await ctx.send("❌ **Ошибка:** Роль с таким ID не найдена на этом сервере.")
             return
         
-        # Проверка иерархии (бот не может выдать роль выше себя)
         if role.position >= ctx.guild.me.top_role.position:
             await ctx.send("❌ **Ошибка:** Эта роль находится выше моей высшей роли. Поднимите меня в списке ролей.")
             return
@@ -140,7 +125,6 @@ async def add_role_to_all(ctx, role_id: int):
         await ctx.send(f"❌ **Ошибка при поиске роли:** {e}")
         return
 
-    # 3. Процесс выдачи
     msg = await ctx.send(f"⚙️ **Запуск процесса...**\nНачинаю выдачу роли **{role.name}** всем участникам.")
     
     success_count = 0
@@ -152,12 +136,10 @@ async def add_role_to_all(ctx, role_id: int):
 
     for member in ctx.guild.members:
         try:
-            # Пропускаем ботов
             if member.bot:
                 skipped_count += 1
                 continue
             
-            # Пропускаем тех, у кого роль уже есть
             if role in member.roles:
                 skipped_count += 1
                 continue
@@ -165,7 +147,6 @@ async def add_role_to_all(ctx, role_id: int):
             await member.add_roles(role, reason=f"Массовая выдача по команде {ctx.author.name}")
             success_count += 1
             
-            # Небольшая задержка, чтобы не упереться в лимиты API (Rate Limits)
             await asyncio.sleep(0.1) 
             
         except discord.Forbidden:
@@ -173,7 +154,6 @@ async def add_role_to_all(ctx, role_id: int):
         except Exception:
             fail_count += 1
 
-    # 4. Отчет
     await msg.edit(content=(
         f"✅ **Готово!**\n"
         f"🎭 Роль: **{role.name}**\n"
@@ -185,8 +165,6 @@ async def add_role_to_all(ctx, role_id: int):
 
 @bot.command(name='help')
 async def help_command(ctx):
-    """Показывает справку по командам"""
-    
     if not await is_authorized(ctx):
         await ctx.send("🚫 **Ошибка доступа:** У вас нет прав для просмотра этой справки.")
         return
@@ -222,17 +200,14 @@ async def help_command(ctx):
 
 @bot.command(name='ping')
 async def ping_command(ctx):
-    """Проверка работоспособности бота"""
     await ctx.send(f"🏓 Понг! Задержка: {round(bot.latency * 1000)}ms")
 
 @bot.command(name='info')
 async def info_command(ctx):
-    """Показывает информацию о боте и правах"""
-    
     embed = discord.Embed(
         title="ℹ️ Информация о боте",
         description="Статус и конфигурация",
-        color=discord.Color.red()  # Красный цвет под статус DND
+        color=discord.Color.red()
     )
     embed.add_field(
         name="🤖 Бот",
