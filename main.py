@@ -42,10 +42,8 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 def is_admin_or_owner():
     """Проверяет, является ли пользователь владельцем или имеет админ-роль"""
     async def predicate(ctx):
-        # Проверка на владельца
         if ctx.author.id == OWNER_ID:
             return True
-        # Проверка на админ-роли
         if hasattr(ctx.author, 'roles'):
             user_role_ids = [role.id for role in ctx.author.roles]
             if any(role_id in user_role_ids for role_id in ADMIN_ROLE_IDS):
@@ -150,12 +148,21 @@ async def roles_command(ctx):
 
 @bot.command(name='say')
 @is_admin_or_owner()
-async def say_command(ctx, *, message: str):
+async def say_command(ctx, *, message: str = None):
     """
     Бот отправляет сообщение от своего имени.
     Использование: !say Текст сообщения
     """
-    # Удаляем сообщение пользователя (чтобы не спамить и скрыть команду)
+    # Если текст не передан
+    if not message:
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        await ctx.send("❌ **Укажите текст сообщения!**\nПример: `!say Привет всем!`", delete_after=10)
+        return
+
+    # Удаляем сообщение пользователя
     try:
         await ctx.message.delete()
     except discord.errors.Forbidden:
@@ -163,6 +170,21 @@ async def say_command(ctx, *, message: str):
     
     # Отправляем сообщение от имени бота
     await ctx.send(message)
+
+# ================= ОБРАБОТКА ОШИБОК =================
+
+@say_command.error
+async def say_command_error(ctx, error):
+    """Обрабатывает ошибки команды !say"""
+    if isinstance(error, commands.CheckFailure):
+        try:
+            await ctx.message.delete()
+        except:
+            pass
+        await ctx.send("🔒 **Нет прав!** Эта команда доступна только Администрации.", delete_after=5)
+    else:
+        # Вывод других ошибок в консоль
+        print(f"Ошибка в команде say: {error}")
 
 # ===================================================
 
