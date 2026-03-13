@@ -62,9 +62,6 @@ async def is_authorized(ctx):
 
 @bot.event
 async def on_ready():
-    # ✅ УДАЛЯЕМ СТАНДАРТНУЮ КОМАНДУ HELP
-    bot.remove_command('help')
-    
     # 🟣 Установка статуса "Не беспокоить" и активности
     await bot.change_presence(
         status=discord.Status.dnd,
@@ -84,7 +81,6 @@ async def on_ready():
     print('----------------------------------')
     print('📜 Команды:')
     print('   !addrole <ID_роли> - Выдать роль всем участникам')
-    print('   !help - Показать справку')
     print('   !ping - Проверка задержки')
     print('   !info - Информация о боте')
     print('----------------------------------')
@@ -92,7 +88,7 @@ async def on_ready():
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send("❌ **Ошибка:** Команда не найдена. Используйте `!help`")
+        await ctx.send("❌ **Ошибка:** Команда не найдена.")
     elif isinstance(error, commands.MissingRequiredArgument):
         await ctx.send("❌ **Ошибка:** Укажите все необходимые аргументы.")
     elif isinstance(error, commands.CommandOnCooldown):
@@ -162,41 +158,6 @@ async def add_role_to_all(ctx, role_id: int):
         f"⚪ Пропущено (уже есть/боты): {skipped_count}\n"
         f"🔴 Ошибки: {fail_count}"
     ))
-
-@bot.command(name='help')
-async def help_command(ctx):
-    if not await is_authorized(ctx):
-        await ctx.send("🚫 **Ошибка доступа:** У вас нет прав для просмотра этой справки.")
-        return
-    
-    embed = discord.Embed(
-        title="📜 Справка по командам",
-        description="Список доступных команд для администрации",
-        color=discord.Color.blue()
-    )
-    embed.add_field(
-        name="!addrole <ID_роли>",
-        value="Выдает указанную роль всем участникам сервера.\n*Кулдаун: 60 секунд*",
-        inline=False
-    )
-    embed.add_field(
-        name="!help",
-        value="Показать эту справку",
-        inline=False
-    )
-    embed.add_field(
-        name="!ping",
-        value="Проверка задержки бота",
-        inline=False
-    )
-    embed.add_field(
-        name="!info",
-        value="Информация о боте и статусе",
-        inline=False
-    )
-    embed.set_footer(text=f"Запрос от {ctx.author.name}")
-    
-    await ctx.send(embed=embed)
 
 @bot.command(name='ping')
 async def ping_command(ctx):
