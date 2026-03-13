@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from discord import app_commands
+from discord.ui import Modal, TextInput
 import asyncio
 from dotenv import load_dotenv
 
@@ -73,17 +74,164 @@ async def delete_user_message(ctx):
     """Удаляет сообщение пользователя после команды"""
     try:
         if isinstance(ctx, discord.Interaction):
-            # Для slash-команд сообщение не удаляется (оно скрыто)
             pass
         else:
-            # Для префикс-команд удаляем сообщение
             await ctx.message.delete()
     except discord.Forbidden:
-        # У бота нет прав на удаление
         pass
     except Exception:
-        # Игнорируем другие ошибки (например, сообщение уже удалено)
         pass
+
+# ============================================
+# 🎨 МОДАЛЬНОЕ ОКНО ДЛЯ СОЗДАНИЯ ЭМБЕДА
+# ============================================
+
+class EmbedCreatorModal(Modal, title='🎨 Создание эмбеда'):
+    def __init__(self, channel: discord.TextChannel):
+        super().__init__()
+        self.channel = channel
+        
+        # Заголовок эмбеда
+        self.title_input = TextInput(
+            label='Заголовок',
+            placeholder='Введите заголовок эмбеда',
+            max_length=256,
+            required=True
+        )
+        self.add_item(self.title_input)
+        
+        # Описание
+        self.description_input = TextInput(
+            label='Описание',
+            placeholder='Введите описание эмбеда',
+            max_length=4096,
+            required=False,
+            style=discord.TextStyle.paragraph
+        )
+        self.add_item(self.description_input)
+        
+        # Цвет (HEX)
+        self.color_input = TextInput(
+            label='Цвет (HEX без #)',
+            placeholder='Пример: FF0000',
+            max_length=6,
+            required=False,
+            default='FF0000'
+        )
+        self.add_item(self.color_input)
+        
+        # Имя автора
+        self.author_input = TextInput(
+            label='Имя автора',
+            placeholder='Кто создал эмбед',
+            max_length=256,
+            required=False
+        )
+        self.add_item(self.author_input)
+        
+        # Иконка автора
+        self.author_icon_input = TextInput(
+            label='Иконка автора (URL)',
+            placeholder='https://example.com/avatar.png',
+            max_length=512,
+            required=False
+        )
+        self.add_item(self.author_icon_input)
+        
+        # Баннер (изображение внизу)
+        self.image_input = TextInput(
+            label='Баннер (URL)',
+            placeholder='https://example.com/banner.png',
+            max_length=512,
+            required=False
+        )
+        self.add_item(self.image_input)
+        
+        # Миниатюра
+        self.thumbnail_input = TextInput(
+            label='Миниатюра (URL)',
+            placeholder='https://example.com/thumb.png',
+            max_length=512,
+            required=False
+        )
+        self.add_item(self.thumbnail_input)
+        
+        # Подвал
+        self.footer_input = TextInput(
+            label='Текст подвала',
+            placeholder='Текст внизу эмбеда',
+            max_length=2048,
+            required=False
+        )
+        self.add_item(self.footer_input)
+        
+        # Иконка подвала
+        self.footer_icon_input = TextInput(
+            label='Иконка подвала (URL)',
+            placeholder='https://example.com/footer.png',
+            max_length=512,
+            required=False
+        )
+        self.add_item(self.footer_icon_input)
+    
+    async def on_submit(self, interaction: discord.Interaction):
+        """Обработка отправки модального окна"""
+        await interaction.response.defer(ephemeral=True)
+        
+        try:
+            # Создание эмбеда
+            embed = discord.Embed(
+                title=self.title_input.value,
+                description=self.description_input.value if self.description_input.value else None,
+                color=int(self.color_input.value, 16) if self.color_input.value else discord.Color.red()
+            )
+            
+            # Автор
+            if self.author_input.value:
+                embed.set_author(
+                    name=self.author_input.value,
+                    icon_url=self.author_icon_input.value if self.author_icon_input.value else None
+                )
+            
+            # Баннер
+            if self.image_input.value:
+                embed.set_image(url=self.image_input.value)
+            
+            # Миниатюра
+            if self.thumbnail_input.value:
+                embed.set_thumbnail(url=self.thumbnail_input.value)
+            
+            # Подвал
+            if self.footer_input.value:
+                embed.set_footer(
+                    text=self.footer_input.value,
+                    icon_url=self.footer_icon_input.value if self.footer_icon_input.value else None
+                )
+            
+            # Отправка эмбеда
+            await self.channel.send(embed=embed)
+            
+            # Подтверждение
+            await interaction.followup.send(
+                f"✅ **Эмбед успешно создан!**\n"
+                f"📬 Канал: {self.channel.mention}\n"
+                f"📝 Заголовок: **{self.title_input.value}**",
+                ephemeral=True
+            )
+            
+        except Exception as e:
+            await interaction.followup.send(
+                f"❌ **Ошибка при создании эмбеда:**\n`{e}`\n\n"
+                f"Проверьте корректность URL изображений и HEX цвета.",
+                ephemeral=True
+            )
+    
+    async def on_error(self, interaction: discord.Interaction, error: Exception) -> None:
+        """Обработка ошибок модального окна"""
+        await interaction.response.send_message(
+            f"❌ **Произошла ошибка:** {error}",
+            ephemeral=True
+        )
 
 # ============================================
 # 🤖 СОБЫТИЯ БОТА
@@ -118,7 +266,7 @@ async def on_ready():
     print('📜 Команды:')
     print('   !addrole <ID_роли> - Выдать роль всем участникам')
     print('   !ping - Проверка задержки')
-    print('   /create_embed - Создать кастомный эмбед')
+    print('   /create_embed - Создать кастомный эмбед (модальное окно)')
     print('----------------------------------')
     print('🧹 Автосоздание: Сообщения команд будут удаляться')
 
@@ -140,7 +288,6 @@ async def on_command_error(ctx, error):
 @bot.command(name='addrole')
 @commands.cooldown(1, 60, commands.BucketType.default)
 async def add_role_to_all(ctx, role_id: int):
-    # 🧹 Удаляем сообщение пользователя
     await delete_user_message(ctx)
     
     if not await is_authorized(ctx):
@@ -201,98 +348,35 @@ async def add_role_to_all(ctx, role_id: int):
 
 @bot.command(name='ping')
 async def ping_command(ctx):
-    # 🧹 Удаляем сообщение пользователя
     await delete_user_message(ctx)
-    
     await ctx.send(f"🏓 Понг! Задержка: {round(bot.latency * 1000)}ms")
 
 # ============================================
 # 🎨 SLASH КОМАНДЫ (/)
 # ============================================
 
-@bot.tree.command(name='create_embed', description='Создать кастомный эмбед в выбранный канал')
+@bot.tree.command(name='create_embed', description='Создать кастомный эмбед через модальное окно')
 @app_commands.describe(
-    channel='Канал для отправки эмбеда',
-    title='Заголовок эмбеда',
-    description='Описание эмбеда',
-    color='Цвет эмбеда (HEX без #, например: FF0000)',
-    author_name='Имя автора',
-    author_icon='URL иконки автора (картинка)',
-    image='URL изображения (баннер внизу эмбеда)',
-    thumbnail='URL миниатюры (справа сверху)',
-    footer='Текст в подвале',
-    footer_icon='URL иконки для подвала'
+    channel='Канал для отправки эмбеда'
 )
 @app_commands.checks.has_permissions(administrator=True)
 async def create_embed(
     interaction: discord.Interaction,
-    channel: discord.TextChannel,
-    title: str,
-    description: str = None,
-    color: str = 'FF0000',
-    author_name: str = None,
-    author_icon: str = None,
-    image: str = None,
-    thumbnail: str = None,
-    footer: str = None,
-    footer_icon: str = None
+    channel: discord.TextChannel
 ):
-    """Создание кастомного эмбеда с изображением автора и баннером"""
+    """Открывает модальное окно для создания эмбеда"""
     
-    # Проверка прав (дублирующая на всякий случай)
+    # Проверка прав
     if not await is_authorized(interaction):
-        await interaction.response.send_message("🚫 **Ошибка доступа:** У вас нет прав для использования этой команды.", ephemeral=True)
+        await interaction.response.send_message(
+            "🚫 **Ошибка доступа:** У вас нет прав для использования этой команды.",
+            ephemeral=True
+        )
         return
     
-    await interaction.response.defer(ephemeral=True)
-    
-    try:
-        # Создание эмбеда
-        embed = discord.Embed(
-            title=title,
-            description=description if description else None,
-            color=int(color, 16)
-        )
-        
-        # Автор (с иконкой-аватаркой)
-        if author_name:
-            embed.set_author(
-                name=author_name,
-                icon_url=author_icon if author_icon else None
-            )
-        
-        # Изображение (баннер внизу)
-        if image:
-            embed.set_image(url=image)
-        
-        # Миниатюра (справа сверху)
-        if thumbnail:
-            embed.set_thumbnail(url=thumbnail)
-        
-        # Подвал (footer)
-        if footer:
-            embed.set_footer(
-                text=footer,
-                icon_url=footer_icon if footer_icon else None
-            )
-        
-        # Отправка эмбеда в выбранный канал
-        await channel.send(embed=embed)
-        
-        # Подтверждение
-        await interaction.followup.send(
-            f"✅ **Эмбед успешно создан!**\n"
-            f"📬 Отправлен в канал: {channel.mention}\n"
-            f"📝 Заголовок: **{title}**",
-            ephemeral=True
-        )
-        
-    except Exception as e:
-        await interaction.followup.send(
-            f"❌ **Ошибка при создании эмбеда:**\n`{e}`\n\n"
-            f"Проверьте корректность URL изображений.",
-            ephemeral=True
-        )
+    # Открываем модальное окно
+    modal = EmbedCreatorModal(channel)
+    await interaction.response.send_modal(modal)
 
 @create_embed.error
 async def create_embed_error(interaction: discord.Interaction, error):
