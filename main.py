@@ -1,6 +1,7 @@
 import os
 import discord
 from discord.ext import commands
+from discord import app_commands
 import asyncio
 from dotenv import load_dotenv
 
@@ -45,16 +46,44 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 # ============================================
 
 async def is_authorized(ctx):
-    if ctx.author.id == OWNER_ID:
-        return True
-    
-    if hasattr(ctx, 'guild') and ctx.guild:
-        for role_id in ADMIN_ROLE_IDS:
-            role = ctx.guild.get_role(role_id)
-            if role and role in ctx.author.roles:
-                return True
-    
-    return False
+    if isinstance(ctx, discord.Interaction):
+        if ctx.user.id == OWNER_ID:
+            return True
+        if ctx.guild:
+            for role_id in ADMIN_ROLE_IDS:
+                role = ctx.guild.get_role(role_id)
+                if role and role in ctx.user.roles:
+                    return True
+        return False
+    else:
+        if ctx.author.id == OWNER_ID:
+            return True
+        if hasattr(ctx, 'guild') and ctx.guild:
+            for role_id in ADMIN_ROLE_IDS:
+                role = ctx.guild.get_role(role_id)
+                if role and role in ctx.author.roles:
+                    return True
+        return False
+
+# ============================================
+# 🧹 ФУНКЦИЯ ОЧИСТКИ
+# ============================================
+
+async def delete_user_message(ctx):
+    """Удаляет сообщение пользователя после команды"""
+    try:
+        if isinstance(ctx, discord.Interaction):
+            # Для slash-команд сообщение не удаляется (оно скрыто)
+            pass
+        else:
+            # Для префикс-команд удаляем сообщение
+            await ctx.message.delete()
+    except discord.Forbidden:
+        # У бота нет прав на удаление
+        pass
+    except Exception:
+        # Игнорируем другие ошибки (например, сообщение уже удалено)
+        pass
 
 # ============================================
 # 🤖 СОБЫТИЯ БОТА
@@ -62,6 +91,13 @@ async def is_authorized(ctx):
 
 @bot.event
 async def on_ready():
+    # Синхронизация slash-команд
+    try:
+        synced = await bot.tree.sync()
+        print(f"✅ Синхронизировано {len(synced)} slash-команд")
+    except Exception as e:
+        print(f"❌ Ошибка синхронизации: {e}")
+    
     # 🟣 Установка статуса "Не беспокоить" и активности
     await bot.change_presence(
         status=discord.Status.dnd,
@@ -82,8 +118,9 @@ async def on_ready():
     print('📜 Команды:')
     print('   !addrole <ID_роли> - Выдать роль всем участникам')
     print('   !ping - Проверка задержки')
-    print('   !info - Информация о боте')
+    print('   /create_embed - Создать кастомный эмбед')
     print('----------------------------------')
+    print('🧹 Автосоздание: Сообщения команд будут удаляться')
 
 @bot.event
 async def on_command_error(ctx, error):
@@ -97,12 +134,15 @@ async def on_command_error(ctx, error):
         await ctx.send(f"❌ **Произошла ошибка:** {error}")
 
 # ============================================
-# ⚔️ КОМАНДЫ БОТА
+# ⚔️ TEXT КОМАНДЫ (PREFIX !)
 # ============================================
 
 @bot.command(name='addrole')
 @commands.cooldown(1, 60, commands.BucketType.default)
 async def add_role_to_all(ctx, role_id: int):
+    # 🧹 Удаляем сообщение пользователя
+    await delete_user_message(ctx)
+    
     if not await is_authorized(ctx):
         await ctx.send("🚫 **Ошибка доступа:** У вас нет прав для использования этой команды.")
         return
@@ -161,48 +201,111 @@ async def add_role_to_all(ctx, role_id: int):
 
 @bot.command(name='ping')
 async def ping_command(ctx):
+    # 🧹 Удаляем сообщение пользователя
+    await delete_user_message(ctx)
+    
     await ctx.send(f"🏓 Понг! Задержка: {round(bot.latency * 1000)}ms")
 
-@bot.command(name='info')
-async def info_command(ctx):
-    embed = discord.Embed(
-        title="ℹ️ Информация о боте",
-        description="Статус и конфигурация",
-        color=discord.Color.red()
-    )
-    embed.add_field(
-        name="🤖 Бот",
-        value=f"{bot.user.name}",
-        inline=True
-    )
-    embed.add_field(
-        name="🛡️ Владелец",
-        value=f"ID: `{OWNER_ID}`",
-        inline=True
-    )
-    embed.add_field(
-        name="🔑 Админ-ролей",
-        value=f"{len(ADMIN_ROLE_IDS)}",
-        inline=True
-    )
-    embed.add_field(
-        name="🟣 Статус",
-        value="Не беспокоить (DND)",
-        inline=True
-    )
-    embed.add_field(
-        name="👁️ Активность",
-        value="Смотрит за Модерирует сервер",
-        inline=True
-    )
-    embed.add_field(
-        name="🔗 Серверов",
-        value=f"{len(bot.guilds)}",
-        inline=True
-    )
-    embed.set_footer(text=f"Запрос от {ctx.author.name}")
+# ============================================
+# 🎨 SLASH КОМАНДЫ (/)
+# ============================================
+
+@bot.tree.command(name='create_embed', description='Создать кастомный эмбед в выбранный канал')
+@app_commands.describe(
+    channel='Канал для отправки эмбеда',
+    title='Заголовок эмбеда',
+    description='Описание эмбеда',
+    color='Цвет эмбеда (HEX без #, например: FF0000)',
+    author_name='Имя автора',
+    author_icon='URL иконки автора (картинка)',
+    image='URL изображения (баннер внизу эмбеда)',
+    thumbnail='URL миниатюры (справа сверху)',
+    footer='Текст в подвале',
+    footer_icon='URL иконки для подвала'
+)
+@app_commands.checks.has_permissions(administrator=True)
+async def create_embed(
+    interaction: discord.Interaction,
+    channel: discord.TextChannel,
+    title: str,
+    description: str = None,
+    color: str = 'FF0000',
+    author_name: str = None,
+    author_icon: str = None,
+    image: str = None,
+    thumbnail: str = None,
+    footer: str = None,
+    footer_icon: str = None
+):
+    """Создание кастомного эмбеда с изображением автора и баннером"""
     
-    await ctx.send(embed=embed)
+    # Проверка прав (дублирующая на всякий случай)
+    if not await is_authorized(interaction):
+        await interaction.response.send_message("🚫 **Ошибка доступа:** У вас нет прав для использования этой команды.", ephemeral=True)
+        return
+    
+    await interaction.response.defer(ephemeral=True)
+    
+    try:
+        # Создание эмбеда
+        embed = discord.Embed(
+            title=title,
+            description=description if description else None,
+            color=int(color, 16)
+        )
+        
+        # Автор (с иконкой-аватаркой)
+        if author_name:
+            embed.set_author(
+                name=author_name,
+                icon_url=author_icon if author_icon else None
+            )
+        
+        # Изображение (баннер внизу)
+        if image:
+            embed.set_image(url=image)
+        
+        # Миниатюра (справа сверху)
+        if thumbnail:
+            embed.set_thumbnail(url=thumbnail)
+        
+        # Подвал (footer)
+        if footer:
+            embed.set_footer(
+                text=footer,
+                icon_url=footer_icon if footer_icon else None
+            )
+        
+        # Отправка эмбеда в выбранный канал
+        await channel.send(embed=embed)
+        
+        # Подтверждение
+        await interaction.followup.send(
+            f"✅ **Эмбед успешно создан!**\n"
+            f"📬 Отправлен в канал: {channel.mention}\n"
+            f"📝 Заголовок: **{title}**",
+            ephemeral=True
+        )
+        
+    except Exception as e:
+        await interaction.followup.send(
+            f"❌ **Ошибка при создании эмбеда:**\n`{e}`\n\n"
+            f"Проверьте корректность URL изображений.",
+            ephemeral=True
+        )
+
+@create_embed.error
+async def create_embed_error(interaction: discord.Interaction, error):
+    if isinstance(error, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message(
+            "🚫 **Ошибка:** У вас нет прав администратора для использования этой команды.",
+            ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(
+            f"❌ **Произошла ошибка:** {error}",
+            ephemeral=True
+        )
 
 # ============================================
 # 🚀 ЗАПУСК БОТА
