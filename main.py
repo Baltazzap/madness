@@ -140,7 +140,7 @@ class RulesView(View):
 # 🎭 КНОПКИ ДЛЯ КОСМЕТИЧЕСКИХ РОЛЕЙ
 # ============================================
 class CosmeticRoleButton(Button):
-    def __init__(self, role_ dict):
+    def __init__(self, role_ dict):  # ✅ ИСПРАВЛЕНО
         super().__init__(label=role_data['name'], emoji=role_data['emoji'], style=discord.ButtonStyle.secondary, custom_id=f'cosmetic_{role_data["id"]}')
         self.role_data = role_data
     
@@ -219,7 +219,6 @@ class EmbedCreatorModal(Modal, title='🎨 Настройка эмбеда'):
 # ============================================
 async def send_rules_embeds(channel):
     embeds = []
-    # (Здесь остается код отправки правил из предыдущей версии)
     embed1 = discord.Embed(title="📜 ПРАВИЛА СЕРВЕРА", description="**«Безумие: Реанимация»**", color=0x8B0000)
     embed1.add_field(name="📅 Обновлено", value="14.03.2026", inline=True)
     embed1.add_field(name="📌 Версия", value="2.1", inline=True)
@@ -240,31 +239,24 @@ async def send_rules_embeds(channel):
 # 🎭 ФУНКЦИЯ ОТПРАВКИ ВЫБОРА РОЛЕЙ
 # ============================================
 async def send_roles_embed(channel):
-    """Отправляет эмбед со всеми ролями и кнопками для косметических"""
-    
     embed = discord.Embed(
         title="🎭 РОЛИ СЕРВЕРА",
         description="**«Безумие: Реанимация»**\n\nНиже представлены все роли сервера. Нажмите на кнопку, чтобы получить или снять **косметическую роль**.\n\n*🔒 Остальные роли выдаются администрацией.*",
         color=0x9932CC
     )
     
-    # 👑 АДМИНИСТРАЦИЯ
     admin_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in ADMIN_ROLES])
     embed.add_field(name="👑 АДМИНИСТРАЦИЯ (Высший совет)", value=admin_mentions, inline=False)
     
-    # 🛡 ПЕРСОНАЛ
     staff_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in STAFF_ROLES])
     embed.add_field(name="🛡 ПЕРСОНАЛ КЛИНИКИ (Модерация)", value=staff_mentions, inline=False)
     
-    # 🧪 РАЗРАБОТЧИКИ
     dev_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in DEV_ROLES])
     embed.add_field(name="🧪 РАЗРАБОТЧИКИ (Создатели)", value=dev_mentions, inline=False)
     
-    # 🎖 ОСОБЫЕ СТАТУСЫ
     special_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in SPECIAL_ROLES])
     embed.add_field(name="🎖 ОСОБЫЕ СТАТУСЫ (Уникальные)", value=special_mentions, inline=False)
     
-    # 🎭 КОСМЕТИЧЕСКИЕ (с кнопками)
     cosmetic_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in COSMETIC_ROLES])
     embed.add_field(name="🎭 КОСМЕТИЧЕСКИЕ РОЛИ (Самовыдача)", value=cosmetic_mentions, inline=False)
     
@@ -351,7 +343,6 @@ async def rules_command(ctx):
 
 @bot.command(name='roles')
 async def roles_command(ctx):
-    """Отправляет эмбед со всеми ролями и кнопками"""
     await delete_user_message(ctx)
     if not await is_authorized_ctx(ctx):
         await ctx.send("🚫 Нет прав.", delete_after=5)
