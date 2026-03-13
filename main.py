@@ -25,43 +25,43 @@ CHANNEL_ROLES_ID = 1482040280705142805
 ROLE_PATIENT_ID = 1482026327841181727
 
 # ============================================
-# 🎭 ВСЕ РОЛИ СЕРВЕРА
+# 🎭 ВСЕ РОЛИ СЕРВЕРА (БЕЗ ИКОНОК)
 # ============================================
 
 ADMIN_ROLES = [
-    {"id": 1482021644703760607, "emoji": "🩸", "name": "Глав Врач", "desc": "Владелец сервера, финальное слово во всех решениях."},
-    {"id": 1482021651867631746, "emoji": "🧬", "name": "Зам. Глав врача", "desc": "Заместитель, координирует работу всех отделов."},
-    {"id": 1482021652488524058, "emoji": "⚕️", "name": "Старший Ординатор", "desc": "Контроль модерации и тех. поддержки, решение конфликтов."},
+    {"id": 1482021644703760607, "name": "Глав Врач", "desc": "Владелец сервера, финальное слово во всех решениях."},
+    {"id": 1482021651867631746, "name": "Зам. Глав врача", "desc": "Заместитель, координирует работу всех отделов."},
+    {"id": 1482021652488524058, "name": "Старший Ординатор", "desc": "Контроль модерации и тех. поддержки, решение конфликтов."},
 ]
 
 STAFF_ROLES = [
-    {"id": 1482021653109018734, "emoji": "🔬", "name": "Врач", "desc": "Модератор чатов: следит за правилами, выдаёт предупреждения."},
-    {"id": 1482021654082093076, "emoji": "💉", "name": "Санитар", "desc": "Помощник модератора, встречает новичков, отвечает на простые вопросы."},
-    {"id": 1482021656636428411, "emoji": "📋", "name": "Регистратор", "desc": "Выдаёт роли, помогает с верификацией и доступом к каналам."},
-    {"id": 1482021656649269310, "emoji": "🔧", "name": "Техник", "desc": "Техническая поддержка: помощь с запуском, баги, аккаунты."},
+    {"id": 1482021653109018734, "name": "Врач", "desc": "Модератор чатов: следит за правилами, выдаёт предупреждения."},
+    {"id": 1482021654082093076, "name": "Санитар", "desc": "Помощник модератора, встречает новичков, отвечает на простые вопросы."},
+    {"id": 1482021656636428411, "name": "Регистратор", "desc": "Выдаёт роли, помогает с верификацией и доступом к каналам."},
+    {"id": 1482021656649269310, "name": "Техник", "desc": "Техническая поддержка: помощь с запуском, баги, аккаунты."},
 ]
 
 DEV_ROLES = [
-    {"id": 1482021658708541570, "emoji": "🧠", "name": "Архитектор", "desc": "Ведущий разработчик, принимает решения по коду и механикам."},
-    {"id": 1482021658796752986, "emoji": "💻", "name": "Кодер", "desc": "Программист: скрипты, фиксы, оптимизация."},
-    {"id": 1482021659878883358, "emoji": "🎨", "name": "Художник", "desc": "Визуал: интерфейс, иконки, промо-материалы."},
+    {"id": 1482021658708541570, "name": "Архитектор", "desc": "Ведущий разработчик, принимает решения по коду и механикам."},
+    {"id": 1482021658796752986, "name": "Кодер", "desc": "Программист: скрипты, фиксы, оптимизация."},
+    {"id": 1482021659878883358, "name": "Художник", "desc": "Визуал: интерфейс, иконки, промо-материалы."},
 ]
 
 SPECIAL_ROLES = [
-    {"id": 1482026327216492684, "emoji": "👑", "name": "Легенда", "desc": "Топ-игрок сервера, имя известно всем."},
-    {"id": 1482021673266839583, "emoji": "🧪", "name": "Бета-тестер", "desc": "Участвует в тестировании сборок, ищет баги."},
-    {"id": 1482021674378334319, "emoji": "🤝", "name": "Партнёр", "desc": "Представитель дружественного проекта/канала."},
-    {"id": 1482026325693825025, "emoji": "🎁", "name": "Донатор", "desc": "Поддержал проект финансово. Бонусы в игре/чате."},
-    {"id": 1482026326746599575, "emoji": "🎨", "name": "Креатор", "desc": "Создал популярный фан-арт, гайд или мем."},
-    {"id": 1482021672604405935, "emoji": "🏆", "name": "Ветеран ВК", "desc": "Играл в оригинал до закрытия. Уважение комьюнити."},
+    {"id": 1482026327216492684, "name": "Легенда", "desc": "Топ-игрок сервера, имя известно всем."},
+    {"id": 1482021673266839583, "name": "Бета-тестер", "desc": "Участвует в тестировании сборок, ищет баги."},
+    {"id": 1482021674378334319, "name": "Партнёр", "desc": "Представитель дружественного проекта/канала."},
+    {"id": 1482026325693825025, "name": "Донатор", "desc": "Поддержал проект финансово. Бонусы в игре/чате."},
+    {"id": 1482026326746599575, "name": "Креатор", "desc": "Создал популярный фан-арт, гайд или мем."},
+    {"id": 1482021672604405935, "name": "Ветеран ВК", "desc": "Играл в оригинал до закрытия. Уважение комьюнити."},
 ]
 
 COSMETIC_ROLES = [
-    {"id": 1482026329368170706, "emoji": "🔪", "name": "Маньяк", "desc": "Для любителей агрессивного стиля"},
-    {"id": 1482026329435148421, "emoji": "🧪", "name": "Безумный учёный", "desc": "Для фанатов лора и науки"},
-    {"id": 1482026850564968488, "emoji": "👻", "name": "Призрак", "desc": "Нейтральный, таинственный"},
-    {"id": 1482026851479195689, "emoji": "☢️", "name": "Радиационный", "desc": "Кислотно-зелёный, стиль «мутант»"},
-    {"id": 1482026853085610117, "emoji": "🌑", "name": "Тень", "desc": "Тёмный, для инкогнито"},
+    {"id": 1482026329368170706, "name": "Маньяк", "desc": "Для любителей агрессивного стиля"},
+    {"id": 1482026329435148421, "name": "Безумный учёный", "desc": "Для фанатов лора и науки"},
+    {"id": 1482026850564968488, "name": "Призрак", "desc": "Нейтральный, таинственный"},
+    {"id": 1482026851479195689, "name": "Радиационный", "desc": "Кислотно-зелёный, стиль «мутант»"},
+    {"id": 1482026853085610117, "name": "Тень", "desc": "Тёмный, для инкогнито"},
 ]
 
 # ============================================
@@ -138,8 +138,8 @@ class RulesView(View):
 # 🎭 КНОПКИ ДЛЯ КОСМЕТИЧЕСКИХ РОЛЕЙ
 # ============================================
 class CosmeticRoleButton(Button):
-    def __init__(self, role_data):  # ✅ ИСПРАВЛЕНО: просто role_data
-        super().__init__(label=role_data['name'], emoji=role_data['emoji'], style=discord.ButtonStyle.secondary, custom_id=f'cosmetic_{role_data["id"]}')
+    def __init__(self, role_data):
+        super().__init__(label=role_data['name'], emoji='🎭', style=discord.ButtonStyle.secondary, custom_id=f'cosmetic_{role_data["id"]}')
         self.role_data = role_data
     
     async def callback(self, interaction: discord.Interaction):
@@ -153,13 +153,13 @@ class CosmeticRoleButton(Button):
         if role in interaction.user.roles:
             try:
                 await interaction.user.remove_roles(role, reason=f"Снятие роли {self.role_data['name']}")
-                await interaction.response.send_message(f"❌ **Роль снята:** {role.mention}\n\n{self.role_data['desc']}", ephemeral=True)
+                await interaction.response.send_message(f"❌ **Роль снята:** {role.mention}", ephemeral=True)
             except Exception as e:
                 await interaction.response.send_message(f"❌ **Ошибка:** {e}", ephemeral=True)
         else:
             try:
                 await interaction.user.add_roles(role, reason=f"Самовыдача роли {self.role_data['name']}")
-                await interaction.response.send_message(f"✅ **Роль получена:** {role.mention}\n\n{self.role_data['desc']}", ephemeral=True)
+                await interaction.response.send_message(f"✅ **Роль получена:** {role.mention}", ephemeral=True)
             except Exception as e:
                 await interaction.response.send_message(f"❌ **Ошибка:** {e}", ephemeral=True)
 
@@ -213,50 +213,88 @@ class EmbedCreatorModal(Modal, title='🎨 Настройка эмбеда'):
         await interaction.followup.send(f"💥 **Ошибка:** {error}", ephemeral=True)
 
 # ============================================
-# 📜 ФУНКЦИЯ ОТПРАВКИ ПРАВИЛ
+# 📜 ФУНКЦИЯ ОТПРАВКИ ПРАВИЛ (ИСПРАВЛЕНО)
 # ============================================
 async def send_rules_embeds(channel):
-    embeds = []
-    embed1 = discord.Embed(title="📜 ПРАВИЛА СЕРВЕРА", description="**«Безумие: Реанимация»**", color=0x8B0000)
-    embed1.add_field(name="📅 Обновлено", value="14.03.2026", inline=True)
-    embed1.add_field(name="📌 Версия", value="2.1", inline=True)
-    embed1.add_field(name="🔞 Возраст", value="16+", inline=True)
-    embeds.append(embed1)
+    # Одно сообщение с правилами + кнопка
+    embed = discord.Embed(
+        title="📜 ПРАВИЛА СЕРВЕРА «БЕЗУМИЕ: РЕАНИМАЦИЯ»",
+        description="*«В этой клинике свои законы. Нарушишь — станешь частью эксперимента.»*",
+        color=0x8B0000
+    )
     
-    embed2 = discord.Embed(title="🤝 ПРИНЯТИЕ ПРАВИЛ", description=f"1. Прочитайте правила\n2. Нажмите кнопку **🩹 Принять правила**\n3. Получите роль **«Пациент»**\n\n📬 Тикеты: <#{CHANNEL_TICKETS_ID}>", color=0x00FF00)
-    embeds.append(embed2)
+    embed.add_field(
+        name="⚠️ ОСНОВНЫЕ ПРИНЦИПЫ",
+        value="**Правило №0:** Уважай других участников\n**Правило №1:** Здравый смысл превыше всего\n**Правило №2:** Незнание правил не освобождает от ответственности",
+        inline=False
+    )
     
-    for i, embed in enumerate(embeds):
-        await channel.send(embed=embed)
-        await asyncio.sleep(0.5)
+    embed.add_field(
+        name="🗣️ ОБЩЕНИЕ",
+        value="✅ Русский/английский язык\n✅ Конструктивная критика\n❌ Оскорбления, спам, реклама\n❌ Контент 18+, спойлеры",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="⚔️ ИГРА",
+        value="✅ Кооперация, тактики\n❌ Читы, мультиаккаунты\n❌ Продажа за реальные деньги",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="🔐 БЕЗОПАСНОСТЬ",
+        value="**Никогда не передавайте:**\n• Пароль от аккаунта\n• Личные данные\n• Коды 2FA\n\n⚠️ Администрация НЕ запросит пароль!",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="⚖️ НАКАЗАНИЯ",
+        value="Оскорбление → ⚠️ → 🔇 → 🔨\nСпам → 🗑️ → 🔇 → 🔨\nЧиты → 🔨 Пермабан",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="📝 АПЕЛЛЯЦИЯ",
+        value=f"Создайте тикет в <#{CHANNEL_TICKETS_ID}>\nУкажите ник и причину\nОжидайте 24-72 часа",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="🤝 ПРИНЯТИЕ ПРАВИЛ",
+        value="Нажмите кнопку **🩹 Принять правила** ниже для получения роли **Пациент** и доступа к серверу.",
+        inline=False
+    )
+    
+    embed.set_footer(text="💀 «Безумие» — это не просто игра. Это состояние души.")
     
     view = RulesView()
-    await channel.send(embed=embeds[-1], view=view)
+    await channel.send(embed=embed, view=view)
 
 # ============================================
-# 🎭 ФУНКЦИЯ ОТПРАВКИ ВЫБОРА РОЛЕЙ
+# 🎭 ФУНКЦИЯ ОТПРАВКИ ВЫБОРА РОЛЕЙ (БЕЗ ИКОНОК)
 # ============================================
 async def send_roles_embed(channel):
     embed = discord.Embed(
         title="🎭 РОЛИ СЕРВЕРА",
-        description="**«Безумие: Реанимация»**\n\nНиже представлены все роли сервера. Нажмите на кнопку, чтобы получить или снять **косметическую роль**.\n\n*🔒 Остальные роли выдаются администрацией.*",
+        description="**«Безумие: Реанимация»**\n\nНажмите на кнопку, чтобы получить или снять **косметическую роль**.\n\n*🔒 Остальные роли выдаются администрацией.*",
         color=0x9932CC
     )
     
-    admin_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in ADMIN_ROLES])
-    embed.add_field(name="👑 АДМИНИСТРАЦИЯ (Высший совет)", value=admin_mentions, inline=False)
+    # Без иконок, только @role
+    admin_mentions = "\n".join([f"<@&{r['id']}> — {r['desc']}" for r in ADMIN_ROLES])
+    embed.add_field(name="👑 АДМИНИСТРАЦИЯ", value=admin_mentions, inline=False)
     
-    staff_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in STAFF_ROLES])
-    embed.add_field(name="🛡 ПЕРСОНАЛ КЛИНИКИ (Модерация)", value=staff_mentions, inline=False)
+    staff_mentions = "\n".join([f"<@&{r['id']}> — {r['desc']}" for r in STAFF_ROLES])
+    embed.add_field(name="🛡 ПЕРСОНАЛ КЛИНИКИ", value=staff_mentions, inline=False)
     
-    dev_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in DEV_ROLES])
-    embed.add_field(name="🧪 РАЗРАБОТЧИКИ (Создатели)", value=dev_mentions, inline=False)
+    dev_mentions = "\n".join([f"<@&{r['id']}> — {r['desc']}" for r in DEV_ROLES])
+    embed.add_field(name="🧪 РАЗРАБОТЧИКИ", value=dev_mentions, inline=False)
     
-    special_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in SPECIAL_ROLES])
-    embed.add_field(name="🎖 ОСОБЫЕ СТАТУСЫ (Уникальные)", value=special_mentions, inline=False)
+    special_mentions = "\n".join([f"<@&{r['id']}> — {r['desc']}" for r in SPECIAL_ROLES])
+    embed.add_field(name="🎖 ОСОБЫЕ СТАТУСЫ", value=special_mentions, inline=False)
     
-    cosmetic_mentions = "\n".join([f"{r['emoji']} **{r['name']}** — {r['desc']}" for r in COSMETIC_ROLES])
-    embed.add_field(name="🎭 КОСМЕТИЧЕСКИЕ РОЛИ (Самовыдача)", value=cosmetic_mentions, inline=False)
+    cosmetic_mentions = "\n".join([f"<@&{r['id']}> — {r['desc']}" for r in COSMETIC_ROLES])
+    embed.add_field(name="🎭 КОСМЕТИЧЕСКИЕ (Самовыдача)", value=cosmetic_mentions, inline=False)
     
     embed.set_footer(text="🩺 Нажмите кнопку ниже для получения косметической роли")
     
@@ -280,16 +318,15 @@ async def on_ready():
     await bot.change_presence(status=discord.Status.dnd, activity=discord.Activity(type=discord.ActivityType.watching, name="за сервером"))
     print(f'🤖 Бот готов: {bot.user}')
     print(f'🎭 Косметических ролей: {len(COSMETIC_ROLES)}')
-    print(f'🔒 Всего ролей в списке: {len(ADMIN_ROLES) + len(STAFF_ROLES) + len(DEV_ROLES) + len(SPECIAL_ROLES) + len(COSMETIC_ROLES)}')
 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send("❌ Команда не найдена.")
+        pass  # Игнорируем неизвестные команды
     elif isinstance(error, commands.CommandOnCooldown):
-        await ctx.send(f"⏳ Подождите {error.retry_after:.1f} сек.")
+        await ctx.send(f"⏳ Подождите {error.retry_after:.1f} сек.", delete_after=5)
     else:
-        await ctx.send(f"❌ Ошибка: {error}")
+        print(f"Ошибка команды: {error}")
 
 # ============================================
 # ⚔️ TEXT КОМАНДЫ
@@ -299,18 +336,17 @@ async def on_command_error(ctx, error):
 async def add_role_to_all(ctx, role_id: int):
     await delete_user_message(ctx)
     if not await is_authorized_ctx(ctx):
-        await ctx.send("🚫 Нет прав.", delete_after=5)
         return
     try:
         role = ctx.guild.get_role(role_id)
         if role is None:
-            await ctx.send("❌ Роль не найдена.")
+            await ctx.send("❌ Роль не найдена.", delete_after=5)
             return
         if role.position >= ctx.guild.me.top_role.position:
-            await ctx.send("❌ Роль выше моей.")
+            await ctx.send("❌ Роль выше моей.", delete_after=5)
             return
     except Exception as e:
-        await ctx.send(f"❌ Ошибка: {e}")
+        await ctx.send(f"❌ Ошибка: {e}", delete_after=5)
         return
 
     msg = await ctx.send(f"⚙️ Выдача роли **{role.name}**...")
@@ -334,28 +370,25 @@ async def add_role_to_all(ctx, role_id: int):
 async def rules_command(ctx):
     await delete_user_message(ctx)
     if not await is_authorized_ctx(ctx):
-        await ctx.send("🚫 Нет прав.", delete_after=5)
         return
-    await ctx.send("📜 **Отправка правил...**", delete_after=3)
     await send_rules_embeds(ctx.channel)
 
 @bot.command(name='roles')
 async def roles_command(ctx):
     await delete_user_message(ctx)
     if not await is_authorized_ctx(ctx):
-        await ctx.send("🚫 Нет прав.", delete_after=5)
         return
-    await ctx.send("🎭 **Отправка ролей...**", delete_after=3)
     await send_roles_embed(ctx.channel)
 
 @bot.command(name='ping')
 async def ping_command(ctx):
     await delete_user_message(ctx)
-    await ctx.send(f"🏓 {round(bot.latency * 1000)}ms")
+    await ctx.send(f"🏓 {round(bot.latency * 1000)}ms", delete_after=10)
 
 @bot.command(name='sync')
 @commands.is_owner()
 async def sync_force(ctx):
+    await delete_user_message(ctx)
     await bot.tree.sync()
     await ctx.send("✅ Команды обновлены!", delete_after=5)
 
