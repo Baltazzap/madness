@@ -42,11 +42,11 @@ bot = commands.Bot(command_prefix='!', intents=intents)
 class RoleSelectView(View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(RoleButton(label="🔪 Агрессия", role_id=COSMETIC_ROLES["knife"], emoji="🔪", style=discord.ButtonStyle.danger))
-        self.add_item(RoleButton(label="🧪 Наука", role_id=COSMETIC_ROLES["science"], emoji="🧪", style=discord.ButtonStyle.blurple))
-        self.add_item(RoleButton(label="👻 Призрак", role_id=COSMETIC_ROLES["ghost"], emoji="👻", style=discord.ButtonStyle.gray))
-        self.add_item(RoleButton(label="☢️ Мутант", role_id=COSMETIC_ROLES["radio"], emoji="☢️", style=discord.ButtonStyle.green))
-        self.add_item(RoleButton(label="🌑 Инкогнито", role_id=COSMETIC_ROLES["moon"], emoji="🌑", style=discord.ButtonStyle.gray))
+        self.add_item(RoleButton(label="Агрессия", role_id=COSMETIC_ROLES["knife"], emoji="🔪", style=discord.ButtonStyle.danger))
+        self.add_item(RoleButton(label="Наука", role_id=COSMETIC_ROLES["science"], emoji="🧪", style=discord.ButtonStyle.blurple))
+        self.add_item(RoleButton(label="Призрак", role_id=COSMETIC_ROLES["ghost"], emoji="👻", style=discord.ButtonStyle.gray))
+        self.add_item(RoleButton(label="Мутант", role_id=COSMETIC_ROLES["radio"], emoji="☢️", style=discord.ButtonStyle.green))
+        self.add_item(RoleButton(label="Инкогнито", role_id=COSMETIC_ROLES["moon"], emoji="🌑", style=discord.ButtonStyle.gray))
 
 class RoleButton(Button):
     def __init__(self, label, role_id, emoji, style):
@@ -97,9 +97,9 @@ async def roles_command(ctx):
     embed.add_field(
         name="👑 АДМИНИСТРАЦИЯ",
         value=(
-            f"<@&1482021644703760607> - 🩸 Глав Врач (Владелец, финальное слово)\n"
-            f"<@&1482021651867631746> - 🧬 Зам. Глав врача (Координация отделов)\n"
-            f"<@&1482021652488524058> - ⚕️ Старший Ординатор (Контроль модерации)"
+            f"<@&1482021644703760607> — Владелец, финальное слово)\n"
+            f"<@&1482021651867631746> — Координация отделов\n"
+            f"<@&1482021652488524058> — Контроль модерации"
         ),
         inline=False
     )
@@ -108,10 +108,10 @@ async def roles_command(ctx):
     embed.add_field(
         name="🛡 ПЕРСОНАЛ КЛИНИКИ",
         value=(
-            f"<@&1482021653109018734> - Модератор чатов (Правила, предупреждения)\n"
-            f"<@&1482021654082093076> - Помощник модератора (Встреча новичков)\n"
-            f"<@&1482021656636428411> - Выдача ролей и верификация\n"
-            f"<@&1482021656649269310> - Тех. поддержка (Баги, аккаунты)"
+            f"<@&1482021653109018734> — Модератор чатов (Правила, предупреждения)\n"
+            f"<@&1482021654082093076> — Помощник модератора (Встреча новичков)\n"
+            f"<@&1482021656636428411> — Выдача ролей и верификация\n"
+            f"<@&1482021656649269310> — Тех. поддержка (Баги, аккаунты)"
         ),
         inline=False
     )
@@ -120,9 +120,9 @@ async def roles_command(ctx):
     embed.add_field(
         name="🧪 РАЗРАБОТЧИКИ",
         value=(
-            f"<@&1482021658708541570> - Ведущий разработчик\n"
-            f"<@&1482021658796752986> - Программист (Скрипты, фиксы)\n"
-            f"<@&1482021659878883358> - Визуал (Интерфейс, иконки)"
+            f"<@&1482021658708541570> — Ведущий разработчик\n"
+            f"<@&1482021658796752986> — Программист (Скрипты, фиксы)\n"
+            f"<@&1482021659878883358> — Визуал (Интерфейс, иконки)"
         ),
         inline=False
     )
@@ -131,12 +131,12 @@ async def roles_command(ctx):
     embed.add_field(
         name="🎖 ОСОБЫЕ СТАТУСЫ",
         value=(
-            f"<@&1482026327216492684> - Топ-игрок сервера\n"
-            f"<@&1482021673266839583> - Тестировщик сборок\n"
-            f"<@&1482021674378334319> - Представитель проекта\n"
-            f"<@&1482026325693825025> - Спонсор проекта\n"
-            f"<@&1482026326746599575> - Фан-арт/Гайд/Мем\n"
-            f"<@&1482021672604405935> - Ветеран (Играл в оригинал)"
+            f"<@&1482026327216492684> — Топ-игрок сервера\n"
+            f"<@&1482021673266839583> — Тестировщик сборок\n"
+            f"<@&1482021674378334319> — Представитель проекта\n"
+            f"<@&1482026325693825025> — Спонсор проекта\n"
+            f"<@&1482026326746599575> — Фан-арт/Гайд/Мем\n"
+            f"<@&1482021672604405935> — Ветеран (Играл в оригинал)"
         ),
         inline=False
     )
@@ -145,11 +145,11 @@ async def roles_command(ctx):
     embed.add_field(
         name="🎭 КОСМЕТИЧЕСКИЕ",
         value=(
-            f"<@&1482026329368170706> - 🔪 Агрессия\n"
-            f"<@&1482026329435148421> - 🧪 Наука\n"
-            f"<@&1482026850564968488> - 👻 Призрак\n"
-            f"<@&1482026851479195689> - ☢️ Мутант\n"
-            f"<@&1482026853085610117> - 🌑 Инкогнито"
+            f"<@&1482026329368170706> — Для любителей агрессивного стиля\n"
+            f"<@&1482026329435148421> — Для фанатов лора и науки\n"
+            f"<@&1482026850564968488> — Нейтральный, таинственный\n"
+            f"<@&1482026851479195689> — Кислотно-зелёный, стиль «мутант»\n"
+            f"<@&1482026853085610117> — Тёмный, для инкогнито"
         ),
         inline=False
     )
