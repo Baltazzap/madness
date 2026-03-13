@@ -69,16 +69,30 @@ async def is_authorized(ctx):
 
 @bot.event
 async def on_ready():
+    """Событие при запуске бота"""
+    
+    # 🟣 Установка статуса "Не беспокоить" и активности
+    await bot.change_presence(
+        status=discord.Status.dnd,  # Status.dnd = Do Not Disturb (Не беспокоить)
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,  # Тип активности: Смотрит
+            name="за Модерирует сервер"          # Текст активности
+        )
+    )
+    
     print('✅ Бот успешно запущен!')
     print(f'🤖 Пользователь: {bot.user} (ID: {bot.user.id})')
     print(f'🛡️ Владелец: {OWNER_ID}')
     print(f'🔑 Админ-ролей: {len(ADMIN_ROLE_IDS)}')
     print(f'🔗 Серверов: {len(bot.guilds)}')
+    print(f'🟣 Статус: Не беспокоить (DND)')
+    print(f'👁️ Активность: Смотрит за Модерирует сервер')
     print('----------------------------------')
     print('📜 Команды:')
     print('   !addrole <ID_роли> - Выдать роль всем участникам')
     print('   !help - Показать справку')
     print('   !ping - Проверка задержки')
+    print('   !info - Информация о боте')
     print('----------------------------------')
 
 @bot.event
@@ -197,6 +211,11 @@ async def help_command(ctx):
         value="Проверка задержки бота",
         inline=False
     )
+    embed.add_field(
+        name="!info",
+        value="Информация о боте и статусе",
+        inline=False
+    )
     embed.set_footer(text=f"Запрос от {ctx.author.name}")
     
     await ctx.send(embed=embed)
@@ -213,11 +232,11 @@ async def info_command(ctx):
     embed = discord.Embed(
         title="ℹ️ Информация о боте",
         description="Статус и конфигурация",
-        color=discord.Color.green()
+        color=discord.Color.red()  # Красный цвет под статус DND
     )
     embed.add_field(
         name="🤖 Бот",
-        value=f"{bot.user.name}#{bot.user.discriminator}",
+        value=f"{bot.user.name}",
         inline=True
     )
     embed.add_field(
@@ -231,13 +250,18 @@ async def info_command(ctx):
         inline=True
     )
     embed.add_field(
-        name="🔗 Серверов",
-        value=f"{len(bot.guilds)}",
+        name="🟣 Статус",
+        value="Не беспокоить (DND)",
         inline=True
     )
     embed.add_field(
-        name="👥 Участников",
-        value=f"{len(ctx.guild.members) if ctx.guild else 'N/A'}",
+        name="👁️ Активность",
+        value="Смотрит за Модерирует сервер",
+        inline=True
+    )
+    embed.add_field(
+        name="🔗 Серверов",
+        value=f"{len(bot.guilds)}",
         inline=True
     )
     embed.set_footer(text=f"Запрос от {ctx.author.name}")
