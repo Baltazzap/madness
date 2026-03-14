@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from discord.ui import Button, View
+from discord.ui import Button, View, Select
 from dotenv import load_dotenv
 import os
 from datetime import datetime
@@ -17,8 +17,7 @@ if not TOKEN:
 # ================= КОНФИГУРАЦИЯ ID =================
 OWNER_ID = 314805583788244993
 LOG_CHANNEL_ID = 1482287259280605225
-WELCOME_CHANNEL_ID = 1482290408598929439
-CHAT_CHANNEL_ID = 1482040574402891986  # ✅ ID основного чата
+TICKET_CATEGORY_ID = 1482347523254517822  # Категория для тикетов
 
 ADMIN_ROLE_IDS = [
     1482021644703760607, 1482021651867631746, 1482021652488524058,
@@ -86,15 +85,120 @@ async def send_log(guild, title, description, color, fields=None, thumbnail=None
     except Exception as e:
         print(f"Ошибка отправки лога: {e}")
 
-# ================= КНОПКИ =================
-class WelcomeButton(View):
-    """Кнопка для приветственного сообщения"""
+# ================= ТИКЕТЫ - КНОПКИ И SELECT =================
+class TicketCategorySelect(Select):
+    """Выбор категории тикета"""
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="👥 Заявка в персонал", value="staff", emoji="👥", description="Подать заявку на роль модератора/админа"),
+            discord.SelectOption(label="🎖 Особый статус", value="special", emoji="🎖", description="Получить уникальную роль за достижения"),
+            discord.SelectOption(label="💻 Разработчиком", value="dev", emoji="💻", description="Подать заявку в команду разработчиков"),
+        ]
+        super().__init__(placeholder="Выберите категорию тикета...", options=options, custom_id="ticket_category")
+
+    async def callback(self, interaction: discord.Interaction):
+        category_id = TICKET_CATEGORY_ID
+        category = interaction.guild.get_channel(category_id)
+        
+        if not category:
+            await interaction.response.send_message("❌ Категория для тикетов не найдена!", ephemeral=True)
+            return
+        
+        # Проверка на существующий тикет
+        for channel in interaction.guild.text_channels:
+            if channel.category_id == category_id and interaction.user.name in channel.name:
+                await interaction.response.send_message(f"❌ У вас уже есть открытый тикет: {channel.mention}", ephemeral=True)
+                return
+        
+        # Создаём канал
+        overwrites = {
+            interaction.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+            interaction.user: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+            interaction.guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True),
+        }
+        
+        # Добавляем права для админов
+        for role_id in ADMIN_ROLE_IDS:
+            role = interaction.guild.get_role(role_id)
+            if role:
+                overwrites[role] = discord.PermissionOverwrite(read_messages=True, send_messages=True)
+        
+        category_name = {
+            "staff": "Заявка в персонал",
+            "special": "Особый статус",
+            "dev": "Разработчиком"
+        }
+        
+        channel_name = f"тикет-{interaction.user.name}-{self.values[0]}"
+        
+        try:
+            ticket_channel = await interaction.guild.create_text_channel(
+                name=channel_name,
+                category=category,
+                overwrites=overwrites,
+                topic=f"Тикет от {interaction.user.mention} | Категория: {category_name[self.values[0]]}"
+            )
+            
+            # Отправляем сообщение в тикет
+            embed = discord.Embed(
+                title="🎫 Тикет создан",
+                description=f"Здравствуйте, {interaction.user.mention}!\n\n"
+                            f"Ваш тикет был создан в категории **{category_name[self.values[0]]}**.\n"
+                            f"Ожидайте ответа от администрации.",
+                color=discord.Color.blue(),
+                timestamp=datetime.utcnow()
+            )
+            embed.add_field(name="📌 Информация", value=(
+                f"**Создатель:** {interaction.user.mention}\n"
+                f"**Категория:** {category_name[self.values[0]]}\n"
+                f"**Время создания:** <t:{int(datetime.utcnow().timestamp())}:F>"
+            ), inline=False)
+            
+            await ticket_channel.send(embed=embed, view=TicketControlView())
+            
+            # Скрываем меню выбора
+            await interaction.response.send_message(
+                f"✅ Тикет создан: {ticket_channel.mention}",
+                ephemeral=True
+            )
+            
+            # Лог
+            await send_log(
+                guild=interaction.guild,
+                title="🎫 Тикет создан",
+                description=f"{interaction.user.mention} создал тикет в категории {category_name[self.values[0]]}",
+                color=discord.Color.green(),
+                thumbnail=interaction.user.display_avatar.url,
+                fields=[
+                    ("Пользователь", f"{interaction.user.mention}\n`{interaction.user.id}`", True),
+                    ("Категория", category_name[self.values[0]], True),
+                    ("Канал", ticket_channel.mention, False)
+                ]
+            )
+            
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Ошибка создания тикета: {e}", ephemeral=True)
+
+class TicketControlView(View):
+    """Кнопки управления тикетом"""
     def __init__(self):
         super().__init__(timeout=None)
-        self.add_item(Button(label="📋 Получить роли", style=discord.ButtonStyle.blurple, custom_id="welcome_roles"))
-        self.add_item(Button(label="📜 Правила", style=discord.ButtonStyle.gray, custom_id="welcome_rules"))
-        self.add_item(Button(label="💬 Чат", style=discord.ButtonStyle.green, custom_id="welcome_chat"))
+        self.add_item(Button(label="🔒 Закрыть тикет", style=discord.ButtonStyle.red, custom_id="ticket_close"))
+        self.add_item(Button(label="🗑️ Удалить тикет", style=discord.ButtonStyle.danger, custom_id="ticket_delete"))
 
+class TicketCreateView(View):
+    """Кнопка создания тикета"""
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(Button(label="🎫 Создать тикет", style=discord.ButtonStyle.blurple, custom_id="ticket_create"))
+
+class TicketCategoryView(View):
+    """Меню выбора категории"""
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(TicketCategorySelect())
+
+# ================= РОЛИ - КНОПКИ =================
 class RoleSelectView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -153,15 +257,16 @@ class RoleButton(Button):
 
 @bot.event
 async def on_ready():
-    bot.add_view(WelcomeButton())
+    bot.add_view(TicketCreateView())
+    bot.add_view(TicketCategoryView())
+    bot.add_view(TicketControlView())
     bot.add_view(RoleSelectView())
     status = discord.Status.dnd
     activity = discord.Activity(name="За сервером Безумия", type=discord.ActivityType.watching)
     await bot.change_presence(status=status, activity=activity)
     print(f'Бот {bot.user.name} запущен!')
     print(f'Канал логов: {LOG_CHANNEL_ID}')
-    print(f'Канал приветствий: {WELCOME_CHANNEL_ID}')
-    print(f'Канал чата: {CHAT_CHANNEL_ID}')
+    print(f'Категория тикетов: {TICKET_CATEGORY_ID}')
     
     try:
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
@@ -169,7 +274,7 @@ async def on_ready():
             log_channel = await bot.fetch_channel(LOG_CHANNEL_ID)
         embed = discord.Embed(
             title="🟢 Бот запущен",
-            description="Система логирования и приветствий активна",
+            description="Система логирования и тикетов активна",
             color=discord.Color.green(),
             timestamp=datetime.utcnow()
         )
@@ -182,45 +287,7 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    """Приветствие нового участника"""
-    try:
-        welcome_channel = bot.get_channel(WELCOME_CHANNEL_ID)
-        if not welcome_channel:
-            welcome_channel = await bot.fetch_channel(WELCOME_CHANNEL_ID)
-        
-        embed = discord.Embed(
-            title="🏥 Добро пожаловать в Клинику!",
-            description=f"{member.mention}, вы успешно поступили в **Безумие - Реанимация**!\n\n"
-                        f"Мы рады видеть вас среди наших пациентов и персонала.\n"
-                        f"Не забудьте ознакомиться с правилами и получить роли!",
-            color=discord.Color.red(),
-            timestamp=datetime.utcnow()
-        )
-        
-        embed.set_thumbnail(url=member.display_avatar.url)
-        
-        embed.add_field(name="📊 Информация", value=(
-            f"**Пользователь:** {member.name}\n"
-            f"**ID:** `{member.id}`\n"
-            f"**Аккаунт создан:** <t:{int(member.created_at.timestamp())}:R>\n"
-            f"**Всего участников:** {len(member.guild.members)}"
-        ), inline=False)
-        
-        embed.add_field(name="📌 Первые шаги", value=(
-            "1️⃣ Прочитайте **правила** сервера\n"
-            "2️⃣ Получите **роли** через кнопки ниже\n"
-            "3️⃣ Представьтесь в **чате**\n"
-            "4️⃣ Наслаждайтесь игрой!"
-        ), inline=False)
-        
-        embed.set_footer(text="🏥 Безумие - Реанимация | Приёмное отделение")
-        
-        await welcome_channel.send(content=f"🎉 {member.mention}", embed=embed, view=WelcomeButton())
-        
-    except Exception as e:
-        print(f"Ошибка отправки приветствия: {e}")
-    
-    # Лог вступления (в канал логов)
+    """Лог вступления"""
     await send_log(
         guild=member.guild,
         title="📥 Участник вступил",
@@ -477,6 +544,47 @@ async def roles_command(ctx):
     embed.set_footer(text="Безумие - Реанимация | Система ролей")
     await ctx.send(embed=embed, view=RoleSelectView())
 
+# ================= КОМАНДА TICKETS =================
+
+@bot.command(name='tickets')
+@is_admin_or_owner()
+async def tickets_command(ctx):
+    """Отправляет панель создания тикетов"""
+    try:
+        await ctx.message.delete()
+    except:
+        pass
+
+    embed = discord.Embed(
+        title="🎫 Система тикетов | Техподдержка",
+        description="Нажмите на кнопку ниже, чтобы создать тикет для связи с администрацией.\n\n"
+                    "**Доступные категории:**\n"
+                    "👥 **Заявка в персонал** — Подать заявку на роль модератора/админа\n"
+                    "🎖 **Особый статус** — Получить уникальную роль за достижения\n"
+                    "💻 **Разработчиком** — Подать заявку в команду разработчиков\n\n"
+                    "⚠️ **Правила:**\n"
+                    "• Не создавайте более 1 тикета одновременно\n"
+                    "• Ожидайте ответа администрации\n"
+                    "• Не злоупотребляйте системой тикетов",
+        color=discord.Color.blue(),
+        timestamp=datetime.utcnow()
+    )
+    
+    embed.set_footer(text="🏥 Безумие - Реанимация | Служба поддержки")
+    
+    await ctx.send(embed=embed, view=TicketCreateView())
+    
+    await send_log(
+        guild=ctx.guild,
+        title="🎫 Панель тикетов создана",
+        description=f"{ctx.author.mention} создал панель тикетов",
+        color=discord.Color.blue(),
+        fields=[
+            ("Администратор", f"{ctx.author.mention}\n`{ctx.author.id}`", True),
+            ("Канал", ctx.channel.mention, True)
+        ]
+    )
+
 # ================= КОМАНДА SAY =================
 
 @bot.command(name='say')
@@ -520,32 +628,80 @@ async def say_command_error(ctx, error):
     else:
         print(f"Ошибка в команде say: {error}")
 
-# ================= ОБРАБОТКА КНОПОК ПРИВЕТСТВИЯ =================
+# ================= ОБРАБОТКА КНОПОК ТИКЕТОВ =================
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):
-    """Обработка кнопок из приветственного сообщения"""
+    """Обработка кнопок тикетов"""
     if interaction.type == discord.InteractionType.component:
-        if interaction.data['custom_id'] == 'welcome_roles':
+        
+        # Создание тикета
+        if interaction.data['custom_id'] == 'ticket_create':
             await interaction.response.send_message(
-                "📋 Чтобы получить роли, используйте команду `!roles` в любом чате!",
+                "📋 Выберите категорию тикета:",
+                view=TicketCategoryView(),
                 ephemeral=True
             )
-        elif interaction.data['custom_id'] == 'welcome_rules':
-            await interaction.response.send_message(
-                "📜 **Правила сервера:**\n"
-                "1. Уважайте других участников\n"
-                "2. Запрещён спам и флуд\n"
-                "3. Запрещены оскорбления\n"
-                "4. Слушайтесь администрацию\n"
-                "5. Запрещён чит в игре",
-                ephemeral=True
+        
+        # Закрытие тикета
+        elif interaction.data['custom_id'] == 'ticket_close':
+            channel = interaction.channel
+            
+            # Проверка что это тикет
+            if not channel.name.startswith('тикет-'):
+                await interaction.response.send_message("❌ Это не тикет!", ephemeral=True)
+                return
+            
+            # Закрываем канал (ограничиваем доступ)
+            overwrites = channel.overwrites
+            overwrites[interaction.guild.default_role] = discord.PermissionOverwrite(read_messages=False)
+            overwrites[interaction.user] = discord.PermissionOverwrite(read_messages=True, send_messages=False)
+            await channel.edit(overwrites=overwrites)
+            
+            embed = discord.Embed(
+                title="🔒 Тикет закрыт",
+                description="Тикет был закрыт. Если у вас есть ещё вопросы, создайте новый тикет.",
+                color=discord.Color.orange(),
+                timestamp=datetime.utcnow()
             )
-        elif interaction.data['custom_id'] == 'welcome_chat':
-            await interaction.response.send_message(
-                f"💬 Перейдите в канал <#{CHAT_CHANNEL_ID}> для общения!",
-                ephemeral=True
+            await channel.send(embed=embed)
+            
+            await interaction.response.send_message("✅ Тикет закрыт!", ephemeral=True)
+            
+            await send_log(
+                guild=interaction.guild,
+                title="🔒 Тикет закрыт",
+                description=f"{interaction.user.mention} закрыл тикет {channel.mention}",
+                color=discord.Color.orange(),
+                fields=[
+                    ("Пользователь", f"{interaction.user.mention}\n`{interaction.user.id}`", True),
+                    ("Канал", channel.mention, False)
+                ]
             )
+        
+        # Удаление тикета
+        elif interaction.data['custom_id'] == 'ticket_delete':
+            channel = interaction.channel
+            
+            if not channel.name.startswith('тикет-'):
+                await interaction.response.send_message("❌ Это не тикет!", ephemeral=True)
+                return
+            
+            await interaction.response.send_message("⚠️ Тикет будет удалён через 5 секунд...", ephemeral=True)
+            
+            await send_log(
+                guild=interaction.guild,
+                title="🗑️ Тикет удалён",
+                description=f"{interaction.user.mention} удалил тикет {channel.mention}",
+                color=discord.Color.red(),
+                fields=[
+                    ("Пользователь", f"{interaction.user.mention}\n`{interaction.user.id}`", True),
+                    ("Канал", channel.mention, False)
+                ]
+            )
+            
+            await asyncio.sleep(5)
+            await channel.delete()
 
 # ===================================================
 
