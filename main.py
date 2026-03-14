@@ -17,6 +17,8 @@ if not TOKEN:
 # ================= КОНФИГУРАЦИЯ ID =================
 OWNER_ID = 314805583788244993
 LOG_CHANNEL_ID = 1482287259280605225
+WELCOME_CHANNEL_ID = 1482290408598929439
+CHAT_CHANNEL_ID = 1482040574402891986  # ✅ ID основного чата
 
 ADMIN_ROLE_IDS = [
     1482021644703760607, 1482021651867631746, 1482021652488524058,
@@ -85,6 +87,14 @@ async def send_log(guild, title, description, color, fields=None, thumbnail=None
         print(f"Ошибка отправки лога: {e}")
 
 # ================= КНОПКИ =================
+class WelcomeButton(View):
+    """Кнопка для приветственного сообщения"""
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(Button(label="📋 Получить роли", style=discord.ButtonStyle.blurple, custom_id="welcome_roles"))
+        self.add_item(Button(label="📜 Правила", style=discord.ButtonStyle.gray, custom_id="welcome_rules"))
+        self.add_item(Button(label="💬 Чат", style=discord.ButtonStyle.green, custom_id="welcome_chat"))
+
 class RoleSelectView(View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -111,7 +121,6 @@ class RoleButton(Button):
         if role in user.roles:
             await user.remove_roles(role)
             await interaction.response.send_message(f"✅ Роль **{role.name}** удалена.", ephemeral=True)
-            # Лог удаления роли
             await send_log(
                 guild=guild,
                 title="🔓 Роль удалена (Самовыдача)",
@@ -127,7 +136,6 @@ class RoleButton(Button):
         else:
             await user.add_roles(role)
             await interaction.response.send_message(f"✅ Роль **{role.name}** выдана.", ephemeral=True)
-            # Лог выдачи роли
             await send_log(
                 guild=guild,
                 title="🔐 Роль выдана (Самовыдача)",
@@ -145,21 +153,23 @@ class RoleButton(Button):
 
 @bot.event
 async def on_ready():
+    bot.add_view(WelcomeButton())
     bot.add_view(RoleSelectView())
     status = discord.Status.dnd
     activity = discord.Activity(name="За сервером Безумия", type=discord.ActivityType.watching)
     await bot.change_presence(status=status, activity=activity)
     print(f'Бот {bot.user.name} запущен!')
     print(f'Канал логов: {LOG_CHANNEL_ID}')
+    print(f'Канал приветствий: {WELCOME_CHANNEL_ID}')
+    print(f'Канал чата: {CHAT_CHANNEL_ID}')
     
-    # Отправляем лог о запуске
     try:
         log_channel = bot.get_channel(LOG_CHANNEL_ID)
         if not log_channel:
             log_channel = await bot.fetch_channel(LOG_CHANNEL_ID)
         embed = discord.Embed(
             title="🟢 Бот запущен",
-            description="Система логирования активна",
+            description="Система логирования и приветствий активна",
             color=discord.Color.green(),
             timestamp=datetime.utcnow()
         )
@@ -172,7 +182,45 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
-    """Логирование вступления участника"""
+    """Приветствие нового участника"""
+    try:
+        welcome_channel = bot.get_channel(WELCOME_CHANNEL_ID)
+        if not welcome_channel:
+            welcome_channel = await bot.fetch_channel(WELCOME_CHANNEL_ID)
+        
+        embed = discord.Embed(
+            title="🏥 Добро пожаловать в Клинику!",
+            description=f"{member.mention}, вы успешно поступили в **Безумие - Реанимация**!\n\n"
+                        f"Мы рады видеть вас среди наших пациентов и персонала.\n"
+                        f"Не забудьте ознакомиться с правилами и получить роли!",
+            color=discord.Color.red(),
+            timestamp=datetime.utcnow()
+        )
+        
+        embed.set_thumbnail(url=member.display_avatar.url)
+        
+        embed.add_field(name="📊 Информация", value=(
+            f"**Пользователь:** {member.name}\n"
+            f"**ID:** `{member.id}`\n"
+            f"**Аккаунт создан:** <t:{int(member.created_at.timestamp())}:R>\n"
+            f"**Всего участников:** {len(member.guild.members)}"
+        ), inline=False)
+        
+        embed.add_field(name="📌 Первые шаги", value=(
+            "1️⃣ Прочитайте **правила** сервера\n"
+            "2️⃣ Получите **роли** через кнопки ниже\n"
+            "3️⃣ Представьтесь в **чате**\n"
+            "4️⃣ Наслаждайтесь игрой!"
+        ), inline=False)
+        
+        embed.set_footer(text="🏥 Безумие - Реанимация | Приёмное отделение")
+        
+        await welcome_channel.send(content=f"🎉 {member.mention}", embed=embed, view=WelcomeButton())
+        
+    except Exception as e:
+        print(f"Ошибка отправки приветствия: {e}")
+    
+    # Лог вступления (в канал логов)
     await send_log(
         guild=member.guild,
         title="📥 Участник вступил",
@@ -207,7 +255,6 @@ async def on_member_update(before, after):
     """Логирование изменений участника (роли, никнейм)"""
     guild = after.guild
     
-    # Изменение никнейма
     if before.nick != after.nick:
         old_nick = before.nick if before.nick else before.name
         new_nick = after.nick if after.nick else after.name
@@ -224,14 +271,12 @@ async def on_member_update(before, after):
             ]
         )
     
-    # Изменение ролей
     before_roles = set(before.roles)
     after_roles = set(after.roles)
     
     added_roles = after_roles - before_roles
     removed_roles = before_roles - after_roles
     
-    # Игнорируем роль @everyone
     added_roles = {r for r in added_roles if r.id != guild.id}
     removed_roles = {r for r in removed_roles if r.id != guild.id}
     
@@ -265,15 +310,12 @@ async def on_member_update(before, after):
 
 @bot.event
 async def on_message(message):
-    """Обработка сообщений (не логируем, чтобы не спамить)"""
     await bot.process_commands(message)
 
 @bot.event
 async def on_message_edit(before, after):
-    """Логирование редактирования сообщений"""
     if before.author.bot:
         return
-    
     if before.content == after.content:
         return
     
@@ -293,7 +335,6 @@ async def on_message_edit(before, after):
 
 @bot.event
 async def on_message_delete(message):
-    """Логирование удаления сообщений"""
     if message.author.bot:
         return
     
@@ -312,7 +353,6 @@ async def on_message_delete(message):
 
 @bot.event
 async def on_member_ban(guild, user):
-    """Логирование бана"""
     await send_log(
         guild=guild,
         title="🔨 Пользователь забанен",
@@ -327,7 +367,6 @@ async def on_member_ban(guild, user):
 
 @bot.event
 async def on_member_unban(guild, user):
-    """Логирование разбана"""
     await send_log(
         guild=guild,
         title="✅ Пользователь разбанен",
@@ -342,10 +381,8 @@ async def on_member_unban(guild, user):
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    """Логирование голосовых каналов"""
     guild = member.guild
     
-    # Присоединение к голосовому
     if before.channel is None and after.channel is not None:
         await send_log(
             guild=guild,
@@ -359,7 +396,6 @@ async def on_voice_state_update(member, before, after):
             ]
         )
     
-    # Отключение от голосового
     if before.channel is not None and after.channel is None:
         await send_log(
             guild=guild,
@@ -373,7 +409,6 @@ async def on_voice_state_update(member, before, after):
             ]
         )
     
-    # Переключение между каналами
     if before.channel is not None and after.channel is not None and before.channel != after.channel:
         await send_log(
             guild=guild,
@@ -462,7 +497,6 @@ async def say_command(ctx, *, message: str = None):
     
     await ctx.send(message)
     
-    # Лог использования команды
     await send_log(
         guild=ctx.guild,
         title="📢 Команда !say использована",
@@ -485,6 +519,33 @@ async def say_command_error(ctx, error):
         await ctx.send("🔒 **Нет прав!** Эта команда доступна только Администрации.", delete_after=5)
     else:
         print(f"Ошибка в команде say: {error}")
+
+# ================= ОБРАБОТКА КНОПОК ПРИВЕТСТВИЯ =================
+
+@bot.event
+async def on_interaction(interaction: discord.Interaction):
+    """Обработка кнопок из приветственного сообщения"""
+    if interaction.type == discord.InteractionType.component:
+        if interaction.data['custom_id'] == 'welcome_roles':
+            await interaction.response.send_message(
+                "📋 Чтобы получить роли, используйте команду `!roles` в любом чате!",
+                ephemeral=True
+            )
+        elif interaction.data['custom_id'] == 'welcome_rules':
+            await interaction.response.send_message(
+                "📜 **Правила сервера:**\n"
+                "1. Уважайте других участников\n"
+                "2. Запрещён спам и флуд\n"
+                "3. Запрещены оскорбления\n"
+                "4. Слушайтесь администрацию\n"
+                "5. Запрещён чит в игре",
+                ephemeral=True
+            )
+        elif interaction.data['custom_id'] == 'welcome_chat':
+            await interaction.response.send_message(
+                f"💬 Перейдите в канал <#{CHAT_CHANNEL_ID}> для общения!",
+                ephemeral=True
+            )
 
 # ===================================================
 
