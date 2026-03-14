@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord.ui import Button, View
 from dotenv import load_dotenv
 import os
+from datetime import datetime
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -15,6 +16,7 @@ if not TOKEN:
 
 # ================= КОНФИГУРАЦИЯ ID =================
 OWNER_ID = 314805583788244993
+LOG_CHANNEL_ID = 1482287259280605225
 
 ADMIN_ROLE_IDS = [
     1482021644703760607, 1482021651867631746, 1482021652488524058,
@@ -35,12 +37,12 @@ COSMETIC_ROLES = {
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
+intents.guilds = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # ================= ПРОВЕРКА ПРАВ =================
 def is_admin_or_owner():
-    """Проверяет, является ли пользователь владельцем или имеет админ-роль"""
     async def predicate(ctx):
         if ctx.author.id == OWNER_ID:
             return True
@@ -50,6 +52,37 @@ def is_admin_or_owner():
                 return True
         return False
     return commands.check(predicate)
+
+# ================= ЛОГИРОВАНИЕ =================
+async def send_log(guild, title, description, color, fields=None, thumbnail=None, footer=None):
+    """Отправляет лог в канал логов"""
+    try:
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        if not log_channel:
+            log_channel = await bot.fetch_channel(LOG_CHANNEL_ID)
+        
+        embed = discord.Embed(
+            title=title,
+            description=description,
+            color=color,
+            timestamp=datetime.utcnow()
+        )
+        
+        if fields:
+            for name, value, inline in fields:
+                embed.add_field(name=name, value=value, inline=inline)
+        
+        if thumbnail:
+            embed.set_thumbnail(url=thumbnail)
+        
+        if footer:
+            embed.set_footer(text=footer)
+        else:
+            embed.set_footer(text=f"🏥 Безумие - Реанимация | ID: {guild.id}")
+        
+        await log_channel.send(embed=embed)
+    except Exception as e:
+        print(f"Ошибка отправки лога: {e}")
 
 # ================= КНОПКИ =================
 class RoleSelectView(View):
@@ -78,9 +111,35 @@ class RoleButton(Button):
         if role in user.roles:
             await user.remove_roles(role)
             await interaction.response.send_message(f"✅ Роль **{role.name}** удалена.", ephemeral=True)
+            # Лог удаления роли
+            await send_log(
+                guild=guild,
+                title="🔓 Роль удалена (Самовыдача)",
+                description=f"{user.mention} удалил роль **{role.name}**",
+                color=discord.Color.orange(),
+                thumbnail=user.display_avatar.url,
+                fields=[
+                    ("Пользователь", f"{user.mention}\n`{user.id}`", True),
+                    ("Роль", f"{role.mention}\n`{role.id}`", True),
+                    ("Действие", "❌ Удаление", True)
+                ]
+            )
         else:
             await user.add_roles(role)
             await interaction.response.send_message(f"✅ Роль **{role.name}** выдана.", ephemeral=True)
+            # Лог выдачи роли
+            await send_log(
+                guild=guild,
+                title="🔐 Роль выдана (Самовыдача)",
+                description=f"{user.mention} получил роль **{role.name}**",
+                color=discord.Color.green(),
+                thumbnail=user.display_avatar.url,
+                fields=[
+                    ("Пользователь", f"{user.mention}\n`{user.id}`", True),
+                    ("Роль", f"{role.mention}\n`{role.id}`", True),
+                    ("Действие", "✅ Выдача", True)
+                ]
+            )
 
 # ================= СОБЫТИЯ =================
 
@@ -91,6 +150,245 @@ async def on_ready():
     activity = discord.Activity(name="За сервером Безумия", type=discord.ActivityType.watching)
     await bot.change_presence(status=status, activity=activity)
     print(f'Бот {bot.user.name} запущен!')
+    print(f'Канал логов: {LOG_CHANNEL_ID}')
+    
+    # Отправляем лог о запуске
+    try:
+        log_channel = bot.get_channel(LOG_CHANNEL_ID)
+        if not log_channel:
+            log_channel = await bot.fetch_channel(LOG_CHANNEL_ID)
+        embed = discord.Embed(
+            title="🟢 Бот запущен",
+            description="Система логирования активна",
+            color=discord.Color.green(),
+            timestamp=datetime.utcnow()
+        )
+        embed.add_field(name="Бот", value=f"{bot.user.mention}\n`{bot.user.id}`", inline=False)
+        embed.add_field(name="Серверов", value=str(len(bot.guilds)), inline=True)
+        embed.add_field(name="Пользователей", value=str(sum(len(guild.members) for guild in bot.guilds)), inline=True)
+        await log_channel.send(embed=embed)
+    except Exception as e:
+        print(f"Не удалось отправить лог запуска: {e}")
+
+@bot.event
+async def on_member_join(member):
+    """Логирование вступления участника"""
+    await send_log(
+        guild=member.guild,
+        title="📥 Участник вступил",
+        description=f"{member.mention} присоединился к серверу",
+        color=discord.Color.green(),
+        thumbnail=member.display_avatar.url,
+        fields=[
+            ("Пользователь", f"{member.mention}\n`{member.id}`", True),
+            ("Аккаунт создан", f"<t:{int(member.created_at.timestamp())}:R>", True),
+            ("Всего участников", str(len(member.guild.members)), True)
+        ]
+    )
+
+@bot.event
+async def on_member_remove(member):
+    """Логирование выхода участника"""
+    await send_log(
+        guild=member.guild,
+        title="📤 Участник покинул сервер",
+        description=f"{member.mention} покинул сервер",
+        color=discord.Color.red(),
+        thumbnail=member.display_avatar.url,
+        fields=[
+            ("Пользователь", f"{member.name}\n`{member.id}`", True),
+            ("Был на сервере", f"<t:{int(member.joined_at.timestamp())}:R>" if member.joined_at else "Неизвестно", True),
+            ("Всего участников", str(len(member.guild.members)), True)
+        ]
+    )
+
+@bot.event
+async def on_member_update(before, after):
+    """Логирование изменений участника (роли, никнейм)"""
+    guild = after.guild
+    
+    # Изменение никнейма
+    if before.nick != after.nick:
+        old_nick = before.nick if before.nick else before.name
+        new_nick = after.nick if after.nick else after.name
+        await send_log(
+            guild=guild,
+            title="✏️ Никнейм изменён",
+            description=f"{after.mention} изменил никнейм",
+            color=discord.Color.blue(),
+            thumbnail=after.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{after.mention}\n`{after.id}`", True),
+                ("Было", old_nick, True),
+                ("Стало", new_nick, True)
+            ]
+        )
+    
+    # Изменение ролей
+    before_roles = set(before.roles)
+    after_roles = set(after.roles)
+    
+    added_roles = after_roles - before_roles
+    removed_roles = before_roles - after_roles
+    
+    # Игнорируем роль @everyone
+    added_roles = {r for r in added_roles if r.id != guild.id}
+    removed_roles = {r for r in removed_roles if r.id != guild.id}
+    
+    if added_roles:
+        roles_list = ", ".join([r.mention for r in added_roles])
+        await send_log(
+            guild=guild,
+            title="🔐 Роль выдана",
+            description=f"{after.mention} получил роль(и): {roles_list}",
+            color=discord.Color.green(),
+            thumbnail=after.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{after.mention}\n`{after.id}`", True),
+                ("Роль(и)", roles_list, False)
+            ]
+        )
+    
+    if removed_roles:
+        roles_list = ", ".join([r.mention for r in removed_roles])
+        await send_log(
+            guild=guild,
+            title="🔓 Роль удалена",
+            description=f"{after.mention} потерял роль(и): {roles_list}",
+            color=discord.Color.orange(),
+            thumbnail=after.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{after.mention}\n`{after.id}`", True),
+                ("Роль(и)", roles_list, False)
+            ]
+        )
+
+@bot.event
+async def on_message(message):
+    """Обработка сообщений (не логируем, чтобы не спамить)"""
+    await bot.process_commands(message)
+
+@bot.event
+async def on_message_edit(before, after):
+    """Логирование редактирования сообщений"""
+    if before.author.bot:
+        return
+    
+    if before.content == after.content:
+        return
+    
+    await send_log(
+        guild=after.guild,
+        title="✏️ Сообщение отредактировано",
+        description=f"{after.author.mention} отредактировал сообщение в {after.channel.mention}",
+        color=discord.Color.blue(),
+        thumbnail=after.author.display_avatar.url,
+        fields=[
+            ("Автор", f"{after.author.mention}\n`{after.author.id}`", True),
+            ("Канал", after.channel.mention, True),
+            ("Было", f"```{before.content[:1000]}```" if before.content else "*(пусто)*", False),
+            ("Стало", f"```{after.content[:1000]}```" if after.content else "*(пусто)*", False)
+        ]
+    )
+
+@bot.event
+async def on_message_delete(message):
+    """Логирование удаления сообщений"""
+    if message.author.bot:
+        return
+    
+    await send_log(
+        guild=message.guild,
+        title="🗑️ Сообщение удалено",
+        description=f"Сообщение от {message.author.mention} удалено в {message.channel.mention}",
+        color=discord.Color.red(),
+        thumbnail=message.author.display_avatar.url if message.author else None,
+        fields=[
+            ("Автор", f"{message.author.mention}\n`{message.author.id}`" if message.author else "Неизвестно", True),
+            ("Канал", message.channel.mention, True),
+            ("Содержимое", f"```{message.content[:1000]}```" if message.content else "*(нет текста/вложение)*", False)
+        ]
+    )
+
+@bot.event
+async def on_member_ban(guild, user):
+    """Логирование бана"""
+    await send_log(
+        guild=guild,
+        title="🔨 Пользователь забанен",
+        description=f"{user.mention} был забанен",
+        color=discord.Color.dark_red(),
+        thumbnail=user.display_avatar.url if hasattr(user, 'display_avatar') else None,
+        fields=[
+            ("Пользователь", f"{user.mention}\n`{user.id}`", True),
+            ("Действие", "⛔ Бан", True)
+        ]
+    )
+
+@bot.event
+async def on_member_unban(guild, user):
+    """Логирование разбана"""
+    await send_log(
+        guild=guild,
+        title="✅ Пользователь разбанен",
+        description=f"{user.mention} был разбанен",
+        color=discord.Color.green(),
+        thumbnail=user.display_avatar.url if hasattr(user, 'display_avatar') else None,
+        fields=[
+            ("Пользователь", f"{user.mention}\n`{user.id}`", True),
+            ("Действие", "✅ Разбан", True)
+        ]
+    )
+
+@bot.event
+async def on_voice_state_update(member, before, after):
+    """Логирование голосовых каналов"""
+    guild = member.guild
+    
+    # Присоединение к голосовому
+    if before.channel is None and after.channel is not None:
+        await send_log(
+            guild=guild,
+            title="🔊 Подключился к голосовому",
+            description=f"{member.mention} подключился к {after.channel.mention}",
+            color=discord.Color.blue(),
+            thumbnail=member.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{member.mention}\n`{member.id}`", True),
+                ("Канал", after.channel.mention, True)
+            ]
+        )
+    
+    # Отключение от голосового
+    if before.channel is not None and after.channel is None:
+        await send_log(
+            guild=guild,
+            title="🔇 Отключился от голосового",
+            description=f"{member.mention} отключился от {before.channel.mention}",
+            color=discord.Color.greyple(),
+            thumbnail=member.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{member.mention}\n`{member.id}`", True),
+                ("Канал", before.channel.mention, True)
+            ]
+        )
+    
+    # Переключение между каналами
+    if before.channel is not None and after.channel is not None and before.channel != after.channel:
+        await send_log(
+            guild=guild,
+            title="🔄 Перешёл в другой голосовой",
+            description=f"{member.mention} перешёл из {before.channel.mention} в {after.channel.mention}",
+            color=discord.Color.blue(),
+            thumbnail=member.display_avatar.url,
+            fields=[
+                ("Пользователь", f"{member.mention}\n`{member.id}`", True),
+                ("Было", before.channel.mention, True),
+                ("Стало", after.channel.mention, True)
+            ]
+        )
+
+# ================= КОМАНДА ROLES =================
 
 @bot.command(name='roles')
 async def roles_command(ctx):
@@ -149,11 +447,6 @@ async def roles_command(ctx):
 @bot.command(name='say')
 @is_admin_or_owner()
 async def say_command(ctx, *, message: str = None):
-    """
-    Бот отправляет сообщение от своего имени.
-    Использование: !say Текст сообщения
-    """
-    # Если текст не передан
     if not message:
         try:
             await ctx.message.delete()
@@ -162,20 +455,28 @@ async def say_command(ctx, *, message: str = None):
         await ctx.send("❌ **Укажите текст сообщения!**\nПример: `!say Привет всем!`", delete_after=10)
         return
 
-    # Удаляем сообщение пользователя
     try:
         await ctx.message.delete()
     except discord.errors.Forbidden:
         pass
     
-    # Отправляем сообщение от имени бота
     await ctx.send(message)
-
-# ================= ОБРАБОТКА ОШИБОК =================
+    
+    # Лог использования команды
+    await send_log(
+        guild=ctx.guild,
+        title="📢 Команда !say использована",
+        description=f"{ctx.author.mention} использовал команду !say",
+        color=discord.Color.blue(),
+        fields=[
+            ("Администратор", f"{ctx.author.mention}\n`{ctx.author.id}`", True),
+            ("Канал", ctx.channel.mention, True),
+            ("Сообщение", message[:1000], False)
+        ]
+    )
 
 @say_command.error
 async def say_command_error(ctx, error):
-    """Обрабатывает ошибки команды !say"""
     if isinstance(error, commands.CheckFailure):
         try:
             await ctx.message.delete()
@@ -183,7 +484,6 @@ async def say_command_error(ctx, error):
             pass
         await ctx.send("🔒 **Нет прав!** Эта команда доступна только Администрации.", delete_after=5)
     else:
-        # Вывод других ошибок в консоль
         print(f"Ошибка в команде say: {error}")
 
 # ===================================================
